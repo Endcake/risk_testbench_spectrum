@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-
+using System.Globalization;
 
 namespace TestBench_Class_Spektrum
 {
@@ -21,21 +21,8 @@ namespace TestBench_Class_Spektrum
 
 
 
-        private List<string> spalte1 = new List<string>();
-        public List<string> Spalte1
-        {
-            get { return spalte1; }
-            set { spalte1 = value; }
-        }
 
-        private List<string> spalte2 = new List<string>();
-        public List<string> Spalte2
-        {
-            get { return spalte2; }
-            set { spalte2 = value; }
-        }
-
-        string zwspeicher = " ";
+        
 
         private int x1;   //x1 auf 0gesetzt
         public int X1
@@ -63,27 +50,13 @@ namespace TestBench_Class_Spektrum
             set { error = value; }
 
         }
-        /* private bool flag;
-         public bool Flag
-         {
-             get { return flag; }
-             set { flag = value; }
-         }*/
+        
 
-        /*private string path = "";
-        public string Path
+        private List<double> wavelength = new List<double>();
+        public List<double> Wavelength
         {
-            get { return path; }   // get method
-            set { path = value; }  // set method
-        }*/
-
-
-
-        private List<double> wellenlaenge = new List<double>();
-        public List<double> Wellenlaenge
-        {
-            get { return wellenlaenge; }   // get method
-            set { wellenlaenge = value; }  // set method
+            get { return wavelength; }   // get method
+            set { Wavelength = value; }  // set method
         }
 
         private List<double> counts = new List<double>();
@@ -151,44 +124,53 @@ namespace TestBench_Class_Spektrum
         int flagg = 0;
 
 
-        /* Methoden
+        /* Methods:
         *  
+        * 
+        *
+        * readTextFile(string)
         * 
         */
 
 
+        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        //
+        //      readTextFile: read spectrum data from txt file
+        //      first column gets stored in Member "wavelength"
+        //      second colum gets stored in ????
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         public int readTextFile(string path)
         {
-            //lese aus file(tabelle in 2 Listen speichern, aufgeteilt in Wellenlänge und counts)
+            double x = 0;                               //buffer for parsed double to add it to list<>
+            string buffer1 = " ";                       //buffer for single read lines
+ 
 
-            using (StreamReader lesen = new StreamReader(path))
+            using (StreamReader reader = new StreamReader(path))
             {
-                //solange Daten lesen bis zum ende des Streams
-                while (!lesen.EndOfStream)
+                //read until end of stream
+                while (!reader.EndOfStream)
                 {
-                    zwspeicher = lesen.ReadLine();
-                    string[] speicher = zwspeicher.Split("\t".ToCharArray());
-                    spalte1.Add(speicher[0]);
-                    spalte2.Add(speicher[1]);
+                    buffer1 = reader.ReadLine(); 
+                    string[] buffer2 = buffer1.Split("\t".ToCharArray()); //read line ist split into wavelength and counts
+
+                  
+                    buffer2[0]=buffer2[0].Replace(',', '.');
+                    double.TryParse(buffer2[0], NumberStyles.Any, CultureInfo.InvariantCulture, out x);
+                    wavelength.Add(x);
+
+                    buffer2[1] = buffer2[1].Replace(',', '.');
+                    double.TryParse(buffer2[1], NumberStyles.Any, CultureInfo.InvariantCulture, out x);
+                    counts.Add(x);
+
 
                 }
 
-
-                //Wellenlänge =Spalte 1 der excel Tabelle, Counts =spalte 2 und konvertieren in double
-                wellenlaenge = spalte1.Select(s => double.Parse(s)).ToList();
-                counts = spalte2.Select(r => double.Parse(r)).ToList();
-
             }
 
+/*
+ #############################################################################################################
 
-
-            //wende Methoden auf Inhalt an. Die Ursprungslisten bleibt dabei erhalten
-            //  zieht offset von counts ab und schiebt das Ergebniss in offset_liste
-            /* normierung(counts, einsnormiert); //normiert counts und schiebt Ergebniss in einsnormiert
-                                               //normierung(offset_liste, offset_einsnormiert);                                    //normiert offset_liste und schiebt Ergebniss in einsnormiert
-             offsetabziehen(X1, X2, counts, offset_liste);
-             segmentausschneiden(X1, X2, counts, counts_segment);
-             segmentausschneiden(X1, X2, wellenlaenge, well_segment);*/
+            
 
             speicherrr = new double[1221];
             int z = 0;
@@ -202,16 +184,16 @@ namespace TestBench_Class_Spektrum
             double laufindex = 0.0;
             for (int i = 0; i < speicherrr.Length; i++)
             {
-                for (int j = 0; j < wellenlaenge.Count; j++)
+                for (int j = 0; j < wavelength.Count; j++)
                 {
 
 
-                    if (speicherrr[i] == wellenlaenge[j])
+                    if (speicherrr[i] == wavelength[j])
                     {
-                        zwwell.Add(wellenlaenge[j]);
+                        zwwell.Add(wavelength[j]);
                         zwcount.Add(counts[j]);
                         zahler++;
-                        if (zahler == 1) { laufindex = wellenlaenge[j] - 180; }
+                        if (zahler == 1) { laufindex = wavelength[j] - 180; }
                         else { }
 
 
@@ -228,17 +210,17 @@ namespace TestBench_Class_Spektrum
 
             if (zwwell.Count == 1221 && zwwell[0] == 380)
             {
-                wellenlaenge.Clear();
+                wavelength.Clear();
                 counts.Clear();
                 for (int i = 0; i < zwwell.Count; i++)
                 {
-                    wellenlaenge.Add(zwwell[i]);
+                    wavelength.Add(zwwell[i]);
                     counts.Add(zwcount[i]);
                 }
             }
             else
             {
-                wellenlaenge.Clear();
+                wavelength.Clear();
                 counts.Clear();
 
                 if (zwwell[0] != 180 && zwwell[zwwell.Count - 1] != 1400)
@@ -246,7 +228,7 @@ namespace TestBench_Class_Spektrum
 
                     while (z <= laufindex - 1)
                     {
-                        wellenlaenge.Add(180 + z);
+                        wavelength.Add(180 + z);
                         counts.Add(0);
 
                         z++;
@@ -254,7 +236,7 @@ namespace TestBench_Class_Spektrum
                     }
                     for (int i = 0; i < zwwell.Count; i++)
                     {
-                        wellenlaenge.Add(zwwell[i]);
+                        wavelength.Add(zwwell[i]);
                         counts.Add(zwcount[i]);
 
                     }
@@ -265,7 +247,7 @@ namespace TestBench_Class_Spektrum
                     {
 
                         //zwwell.Add(1400-laufindex);
-                        wellenlaenge.Add(1400 - laufindex + 1);
+                        wavelength.Add(1400 - laufindex + 1);
                         counts.Add(0);
                         laufindex--;
 
@@ -285,7 +267,7 @@ namespace TestBench_Class_Spektrum
                     {
 
                         //zwwell.Add(1400-laufindex);
-                        wellenlaenge.Add(1400 - laufindex + 1);
+                        wavelength.Add(1400 - laufindex + 1);
                         counts.Add(0);
                         laufindex--;
 
@@ -297,7 +279,7 @@ namespace TestBench_Class_Spektrum
 
                     while (z <= laufindex - 1)
                     {
-                        wellenlaenge.Add(180 + z);
+                        wavelength.Add(180 + z);
                         counts.Add(0);
 
                         z++;
@@ -306,7 +288,7 @@ namespace TestBench_Class_Spektrum
 
                     for (int i = 0; i < zwwell.Count; i++)
                     {
-                        wellenlaenge.Add(zwwell[i]);
+                        wavelength.Add(zwwell[i]);
                         counts.Add(zwcount[i]);
 
                     }
@@ -320,14 +302,14 @@ namespace TestBench_Class_Spektrum
             }
 
             double sumup = 0;
-            for (int i = 0; i < wellenlaenge.Count; i++)
+            for (int i = 0; i < wavelength.Count; i++)
             {
 
                 sumup = sumup + counts[i];
 
             }
 
-            for (int i = 0; i < wellenlaenge.Count; i++)
+            for (int i = 0; i < wavelength.Count; i++)
             {
 
                 counts[i] = counts[i] / sumup;
@@ -335,15 +317,17 @@ namespace TestBench_Class_Spektrum
             }
 
 
-
-
+##########################################################################################################
+            */
 
             return 0;
         }
 
-
-
-        //Normierung übergabe von Ursprungsliste und Zielliste
+        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        //
+        //      Normierung übergabe von Ursprungsliste und Zielliste
+        //
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         public int normierung(List<double> Ursprungsliste, List<double> Zielliste, bool flag)
         {
             flagg = 0;
