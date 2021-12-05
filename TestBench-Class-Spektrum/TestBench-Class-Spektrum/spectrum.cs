@@ -137,7 +137,7 @@ namespace TestBench_Class_Spektrum
         //
         //      readTextFile: read spectrum data from txt file
         //      first column gets stored in Member "wavelength"
-        //      second colum gets stored in ????
+        //      second colum gets stored in Member "counts"
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         public int readTextFile(string path)
         {
@@ -145,7 +145,7 @@ namespace TestBench_Class_Spektrum
             string buffer1 = " ";                       //buffer for single read lines
  
 
-            using (StreamReader reader = new StreamReader(path))
+            using (StreamReader reader = new StreamReader(path)) 
             {
                 //read until end of stream
                 while (!reader.EndOfStream)
@@ -166,159 +166,202 @@ namespace TestBench_Class_Spektrum
                 }
 
             }
+            // if wavelength span is smaller or bigger than 180nm to 1400 nm
+            // fill or cut Lists to size (filling with zeros)
 
-/*
- #############################################################################################################
+            // filling to 180nm
+   
+            int min = Convert.ToInt32(Math.Floor(wavelength.Min())); // gets minimum wavelength
 
+            if (min > 180)
+            {
+                int index = min - 180;
+                for(int i=1;i<=index; i++)
+                {
+                    x = Convert.ToDouble(min - i);
+                    counts.Insert(0, 0);
+                    wavelength.Insert(0, x);
+                }
+            }
+            // cut to 180 and 1400nm
+            int item_index = 0;
+            foreach (double item in wavelength) // Loop through List with foreach
+            {
+                if (item < 180|item>1400)
+                {
+                    item_index=wavelength.IndexOf(item);
+                    wavelength.Remove(item);
+                    counts.RemoveAt(item_index);
+                }
+            }
             
 
-            speicherrr = new double[1221];
-            int z = 0;
-            for (int i = 180; i <= 1400; i++)
+            // filling to 1400nm
+            int max = Convert.ToInt32(Math.Floor(wavelength.Max())); // gets maximum wavelength
+            if (max <1400)
             {
-                speicherrr[z] = i;
-                z++;
-
-            }
-            int zahler = 0;
-            double laufindex = 0.0;
-            for (int i = 0; i < speicherrr.Length; i++)
-            {
-                for (int j = 0; j < wavelength.Count; j++)
+                int index = 1400 - max;
+                for(int i = 1; i <= 1400-max; i++)
                 {
-
-
-                    if (speicherrr[i] == wavelength[j])
-                    {
-                        zwwell.Add(wavelength[j]);
-                        zwcount.Add(counts[j]);
-                        zahler++;
-                        if (zahler == 1) { laufindex = wavelength[j] - 180; }
-                        else { }
-
-
-                    }
-                    else
-                    {
-
-                    }
-
+                    x = Convert.ToDouble(max+i);
+                    counts.Add(0);
+                    wavelength.Add(x);
                 }
+               
             }
 
-            z = 0;
-
-            if (zwwell.Count == 1221 && zwwell[0] == 380)
-            {
-                wavelength.Clear();
-                counts.Clear();
-                for (int i = 0; i < zwwell.Count; i++)
-                {
-                    wavelength.Add(zwwell[i]);
-                    counts.Add(zwcount[i]);
-                }
-            }
-            else
-            {
-                wavelength.Clear();
-                counts.Clear();
-
-                if (zwwell[0] != 180 && zwwell[zwwell.Count - 1] != 1400)
-                {
-
-                    while (z <= laufindex - 1)
-                    {
-                        wavelength.Add(180 + z);
-                        counts.Add(0);
-
-                        z++;
-
-                    }
-                    for (int i = 0; i < zwwell.Count; i++)
-                    {
-                        wavelength.Add(zwwell[i]);
-                        counts.Add(zwcount[i]);
-
-                    }
-
-                    laufindex = 1400 - zwwell[zwwell.Count - 1];
-                    index = 0;
-                    while (laufindex != index)
-                    {
-
-                        //zwwell.Add(1400-laufindex);
-                        wavelength.Add(1400 - laufindex + 1);
-                        counts.Add(0);
-                        laufindex--;
-
-                    }
-
-
-                }
+            /*
+             #############################################################################################################
 
 
 
+                        speicherrr = new double[1221];
+                        int z = 0;
+                        for (int i = 180; i <= 1400; i++)
+                        {
+                            speicherrr[z] = i;
+                            z++;
 
-                else if (zwwell[0] == 180 && zwwell[zwwell.Count - 1] != 1400)
-                {
-                    laufindex = 1400 - zwwell[zwwell.Count - 1];
-                    index = 0;
-                    while (laufindex != index)
-                    {
-
-                        //zwwell.Add(1400-laufindex);
-                        wavelength.Add(1400 - laufindex + 1);
-                        counts.Add(0);
-                        laufindex--;
-
-                    }
-
-                }
-                else if (zwwell[0] != 180 && zwwell[zwwell.Count - 1] == 1400)
-                {
-
-                    while (z <= laufindex - 1)
-                    {
-                        wavelength.Add(180 + z);
-                        counts.Add(0);
-
-                        z++;
-
-                    }
-
-                    for (int i = 0; i < zwwell.Count; i++)
-                    {
-                        wavelength.Add(zwwell[i]);
-                        counts.Add(zwcount[i]);
-
-                    }
+                        }
+                        int zahler = 0;
+                        double laufindex = 0.0;
+                        for (int i = 0; i < speicherrr.Length; i++)
+                        {
+                            for (int j = 0; j < wavelength.Count; j++)
+                            {
 
 
-
-                }
-
-
-
-            }
-
-            double sumup = 0;
-            for (int i = 0; i < wavelength.Count; i++)
-            {
-
-                sumup = sumup + counts[i];
-
-            }
-
-            for (int i = 0; i < wavelength.Count; i++)
-            {
-
-                counts[i] = counts[i] / sumup;
-
-            }
+                                if (speicherrr[i] == wavelength[j])
+                                {
+                                    zwwell.Add(wavelength[j]);
+                                    zwcount.Add(counts[j]);
+                                    zahler++;
+                                    if (zahler == 1) { laufindex = wavelength[j] - 180; }
+                                    else { }
 
 
-##########################################################################################################
-            */
+                                }
+                                else
+                                {
+
+                                }
+
+                            }
+                        }
+
+                        z = 0;
+
+                        if (zwwell.Count == 1221 && zwwell[0] == 380)
+                        {
+                            wavelength.Clear();
+                            counts.Clear();
+                            for (int i = 0; i < zwwell.Count; i++)
+                            {
+                                wavelength.Add(zwwell[i]);
+                                counts.Add(zwcount[i]);
+                            }
+                        }
+                        else
+                        {
+                            wavelength.Clear();
+                            counts.Clear();
+
+                            if (zwwell[0] != 180 && zwwell[zwwell.Count - 1] != 1400)
+                            {
+
+                                while (z <= laufindex - 1)
+                                {
+                                    wavelength.Add(180 + z);
+                                    counts.Add(0);
+
+                                    z++;
+
+                                }
+                                for (int i = 0; i < zwwell.Count; i++)
+                                {
+                                    wavelength.Add(zwwell[i]);
+                                    counts.Add(zwcount[i]);
+
+                                }
+
+                                laufindex = 1400 - zwwell[zwwell.Count - 1];
+                                index = 0;
+                                while (laufindex != index)
+                                {
+
+                                    //zwwell.Add(1400-laufindex);
+                                    wavelength.Add(1400 - laufindex + 1);
+                                    counts.Add(0);
+                                    laufindex--;
+
+                                }
+
+
+                            }
+
+
+
+
+                            else if (zwwell[0] == 180 && zwwell[zwwell.Count - 1] != 1400)
+                            {
+                                laufindex = 1400 - zwwell[zwwell.Count - 1];
+                                index = 0;
+                                while (laufindex != index)
+                                {
+
+                                    //zwwell.Add(1400-laufindex);
+                                    wavelength.Add(1400 - laufindex + 1);
+                                    counts.Add(0);
+                                    laufindex--;
+
+                                }
+
+                            }
+                            else if (zwwell[0] != 180 && zwwell[zwwell.Count - 1] == 1400)
+                            {
+
+                                while (z <= laufindex - 1)
+                                {
+                                    wavelength.Add(180 + z);
+                                    counts.Add(0);
+
+                                    z++;
+
+                                }
+
+                                for (int i = 0; i < zwwell.Count; i++)
+                                {
+                                    wavelength.Add(zwwell[i]);
+                                    counts.Add(zwcount[i]);
+
+                                }
+
+
+
+                            }
+
+
+
+                        }
+
+                        double sumup = 0;
+                        for (int i = 0; i < wavelength.Count; i++)
+                        {
+
+                            sumup = sumup + counts[i];
+
+                        }
+
+                        for (int i = 0; i < wavelength.Count; i++)
+                        {
+
+                            counts[i] = counts[i] / sumup;
+
+                        }
+
+
+            ##########################################################################################################
+                        */
 
             return 0;
         }
